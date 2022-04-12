@@ -60,8 +60,7 @@ def create_app(test_config=None):
             return redirect(url_for("closed", max_responders=max_responders))
         statement = ''
         if not has_started():
-            statement = get_statement()
-            print(statement['statement'])
+            return redirect(url_for("start_survey"))
         
         elif not is_done():
             statement = session['statement']
@@ -78,14 +77,17 @@ def create_app(test_config=None):
 
         return render_template('survey.html', statement=statement, max_responses=max_responses, response_count=len(session['shown']))
 
-    @app.route('/finish')
+    @app.route('/finish', methods=('GET','POST'))
     def finish_survey():
         if get_responder_count() >= max_responders:
             return redirect(url_for("closed", max_responders=max_responders))
+        
         return render_template('finish.html')  
 
     @app.route('/closed')
     def closed():
+        if get_responder_count() < max_responders:
+            return redirect(url_for("start_survey"))
         return render_template('closed.html', max_responders=max_responders)
 
     def get_statement():

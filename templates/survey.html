@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block header %}
+    <h1>{% block title %}Survey{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+
+    <h2>Article {{ response_count }} of {{ max_responses }}</h2>
+    <h3>Statement</h3>
+    <p>{{ statement['statement'] }}</p>
+    <h3>Subjects</h3>
+    <p>{{ statement['subject'] }}</p>
+    <h3>Speaker</h3>
+    <p>{{ statement['speaker'] }}</p>
+    <h3>Job Title</h3>
+    <p>{{ statement['job_title'] }}</p>
+    <h3>State (Or Country)</h3>
+    <p>{{ statement['state_info'] }}</p>
+    <h3>Party</h3>
+    <p>{{ statement['party_affiliation'] }}</p>
+    <h3>Context</h3>
+    <p>{{ statement['context'] }}</p>
+    <h3>Is this real or fake?</h3>
+    <form method="post">
+        <input type="radio" name="vote" value="0" onchange="this.form.submit();">Real<br>
+        <input type="radio" name="vote" value="1" onchange="this.form.submit();">Fake<br>
+    </form>
+{% endblock %}

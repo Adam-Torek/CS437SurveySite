@@ -1,0 +1,18 @@
+.content {
+    text-align: center;
+    width: 40%;
+    position:absolute;
+    transform: translate(-50%, -50%);
+    left: 50%;
+    top: 50%;
+    background: #ff3c3c;
+    color: #f2f5f3;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
+    font-family: Arial, Verdana, sans-serif;
+    padding: 20px;
+}
+
+body {
+    background: #3e3eff;
+}

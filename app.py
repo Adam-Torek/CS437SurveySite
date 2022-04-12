@@ -2,8 +2,7 @@ from tabnanny import check
 from flask import (Flask, redirect, render_template, request, session, url_for)
 import os
 
-from matplotlib.pyplot import get
-from db import get_db
+from db import update_db, get_result
 import random
 
 
@@ -13,7 +12,6 @@ def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY='dev',
-        DATABASE=os.path.join(app.instance_path, 'survey_results.sqlite'),
     )
 
     if test_config is None:
@@ -29,20 +27,14 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    max_responses = 15
-    max_responders = 200
-
-    @app.before_request
-    def check_responses():
-        if get_responder_count() > max_responders:
-            return redirect(url_for("closed", max_responders=max_responders))
+    max_responses = 10
+    max_responders = 1
 
     @app.route('/', methods=('GET','POST'))
     def start_survey():
+        if get_responder_count() >= max_responders:
+            return redirect(url_for("closed", max_responders=max_responders))
         if is_done():
-            db = get_db()
-            db.execute("UPDATE responders SET finished = ? WHERE id = ?", (1, session['responder_id']))
-            db.commit()
             return redirect(url_for("finish_survey"))
         elif has_started():
             return redirect(url_for("do_survey"))
@@ -50,11 +42,10 @@ def create_app(test_config=None):
         elif request.method == 'POST':
             session['shown'] = []
             political_leaning = request.form['political_leaning']
-            db = get_db()
-            db.execute("INSERT INTO responders (political_leaning, finished) VALUES (?, ?)", (political_leaning,0))
-            db.commit()
-            session['responder_id'] = int(db.execute("SELECT id FROM responders ORDER BY id DESC LIMIT 1").fetchone()[0])
-            session['max_id'] = int(db.execute("SELECT COUNT(*) FROM liar").fetchone()[0])
+           
+            update_db("INSERT INTO responders (political_leaning, finished) VALUES (%s, %s)", (political_leaning,0))
+            session['responder_id'] = int(get_result("SELECT id FROM responders ORDER BY id DESC LIMIT 1")[0])
+            session['max_id'] = int(get_result("SELECT COUNT(*) FROM liar")[0])
             return redirect(url_for("do_survey"))
 
         else:
@@ -62,6 +53,8 @@ def create_app(test_config=None):
 
     @app.route("/survey", methods=('GET', 'POST'))
     def do_survey():
+        if get_responder_count() >= max_responders:
+            return redirect(url_for("closed", max_responders=max_responders))
         statement = ''
         if not has_started():
             statement = get_statement()
@@ -72,26 +65,27 @@ def create_app(test_config=None):
             if request.method == 'POST':
                 vote = request.form['vote']
                 responder_id = session['responder_id']
-                db = get_db()
-                db.execute("INSERT INTO responses (responder_id, statement_id, vote) VALUES (?,?,?)", 
+               
+                update_db("INSERT INTO responses (responder_id, statement_id, vote) VALUES (%s,%s,%s)", 
                 (responder_id, statement['id'], vote))
                 statement = get_statement()
-            
         else:
+            update_db("UPDATE responders SET finished = %s WHERE id = %s", (1, session['responder_id']))   
             return redirect(url_for('finish_survey'))
 
         return render_template('survey.html', statement=statement, max_responses=max_responses, response_count=len(session['shown']))
 
     @app.route('/finish')
     def finish_survey():
+        if get_responder_count() >= max_responders:
+            return redirect(url_for("closed", max_responders=max_responders))
         return render_template('finish.html')  
 
     @app.route('/closed')
     def closed():
-        return render_template('closed.html', max_responders)
+        return render_template('closed.html', max_responders=max_responders)
 
     def get_statement():
-        db = get_db()
         shown = session['shown']
         max_id = session['max_id']
         id = random.randint(1, max_id)
@@ -100,14 +94,13 @@ def create_app(test_config=None):
         print(id)
         shown.append(id)
         session['shown'] = shown
-        row = db.execute("SELECT id, statement, subject, speaker, job_title, state_info, party_affiliation, context FROM liar WHERE id = ?", (id,)).fetchone()
-        statement = dict(zip(row.keys(), row))
+        row = get_result("SELECT id, statement, subject, speaker, job_title, state_info, party_affiliation, context FROM liar WHERE id = %s", (id,), use_dict=True)
+        statement = row
         session['statement'] = statement
         return statement
 
     def get_responder_count():
-        db = get_db()
-        return int(db.execute("SELECT COUNT(*) FROM responders WHERE finished = 1").fetchone()[0])
+        return int(get_result("SELECT COUNT(*) FROM responders WHERE finished = 1")[0])
 
     def is_done():
         return session.get('shown') is not None and len(session['shown']) >= max_responses

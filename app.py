@@ -1,6 +1,4 @@
-
 from tabnanny import check
-from django.shortcuts import render
 from flask import (Flask, redirect, render_template, request, session, url_for)
 import os
 

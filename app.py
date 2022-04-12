@@ -1,4 +1,4 @@
-from tabnanny import check
+from flask_cors import CORS
 from flask import (Flask, redirect, render_template, request, session, url_for)
 import os
 
@@ -27,8 +27,11 @@ def create_app(test_config=None):
     except OSError:
         pass
 
+    cors = CORS(app)
+    app.config['CORS_HEADERS'] = 'Content-Type'
+
     max_responses = 10
-    max_responders = 1
+    max_responders = 100
 
     @app.route('/', methods=('GET','POST'))
     def start_survey():

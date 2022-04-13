@@ -46,9 +46,11 @@ def create_app(test_config=None):
             session['shown'] = []
             political_leaning = request.form['political_leaning']
            
+            
             update_db("INSERT INTO responders (political_leaning, finished) VALUES (%s, %s)", (political_leaning,0))
             session['responder_id'] = int(get_result("SELECT id FROM responders ORDER BY id DESC LIMIT 1")[0])
             session['max_id'] = int(get_result("SELECT COUNT(*) FROM liar")[0])
+            session['statement'] = get_statement()
             return redirect(url_for("do_survey"))
 
         else:
@@ -77,7 +79,7 @@ def create_app(test_config=None):
 
         return render_template('survey.html', statement=statement, max_responses=max_responses, response_count=len(session['shown']))
 
-    @app.route('/finish', methods=('GET','POST'))
+    @app.route('/finish')
     def finish_survey():
         if get_responder_count() >= max_responders:
             return redirect(url_for("closed", max_responders=max_responders))

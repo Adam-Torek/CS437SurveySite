@@ -1,6 +1,6 @@
 .content {
     text-align: center;
-    width: 40%;
+    width: 70%;
     position:absolute;
     transform: translate(-50%, -50%);
     left: 50%;
@@ -11,8 +11,18 @@
     border-radius: 20px;
     font-family: Arial, Verdana, sans-serif;
     padding: 20px;
+    overflow-y: scroll;
+    height:100%;
 }
 
 body {
     background: #3e3eff;
+    
+}
+
+.result {
+    padding-top:10px;
+    padding-bottom: 10px;
+    border-top: 1px solid #f2f5f3;
+    border-bottom: 1px solid #f2f5f3;
 }

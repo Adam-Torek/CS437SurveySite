@@ -7,4 +7,17 @@
 {% block content %}
     <h2>Thank you for taking our survey!</h2>
     <p>Thank you for taking our survey on fake news. Your participation is greatly appreciated.</p>
+
+    {% set count = namespace(value=1) %}
+    <h3>Your results:</h3>
+    {% for result in results %}
+        <div class="result">
+            <p>Statement: {{ count.value }}</p>
+            <p>{{ result['statement'] }}</p>
+            <p>Your Opinion: {{ result['vote'] }}</p>
+            <p>Politifact's Opinion: {{ result['label'] }}</p>
+        </div>
+        {% set count.value = count.value + 1 %}
+    {% endfor %}
+    
 {% endblock %}

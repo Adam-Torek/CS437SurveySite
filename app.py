@@ -1,3 +1,4 @@
+from lib2to3.pytree import convert
 from flask_cors import CORS
 from flask import (Flask, redirect, render_template, request, session, url_for)
 import os
@@ -84,7 +85,20 @@ def create_app(test_config=None):
         if get_responder_count() >= max_responders:
             return redirect(url_for("closed", max_responders=max_responders))
         
-        return render_template('finish.html')  
+        shown = session['shown']
+        lowest = min(shown)
+        highest = max(shown)
+        results = get_result("select l.label AS label, l.statement AS statement, r.vote AS vote FROM liar l INNER JOIN responses r \
+            ON r.statement_id = l.id \
+            WHERE r.responder_id=%s \
+            AND r.statement_id BETWEEN %s and %s \
+            ORDER BY r.id", 
+            (session['responder_id'], lowest, highest), getall=True, use_dict=True)
+        
+        for result in results:
+            result['vote'] = convert_to_bool(result['vote'])
+            result['label'] = convert_to_bool(result['label'])
+        return render_template('finish.html', results=results)  
 
     @app.route('/closed')
     def closed():
@@ -114,6 +128,9 @@ def create_app(test_config=None):
     
     def has_started():
         return session.get('shown') is not None and len(session['shown']) > 0
+
+    def convert_to_bool(label):
+        return False if label == 1 else True
 
     import db
     db.init_app(app)

@@ -9,8 +9,7 @@ import os
 def get_db(get_db=False, use_dict=False):
     if 'db' not in g:
         g.db = psycopg2.connect(
-           'postgres://bchuvmzlqyjpfo:78647e2a8bedb34d5f1f4d99425f2ca49425c085f67b5b002185e81767e06f35@ec2-3-217-251-77.compute-1.amazonaws.com:5432/d5pmhkhhtjdms5'
-           #'postgres://postgres:p0stgr3S@127.0.0.1:5432/db_survey'
+            os.environ['DATABASE_URL']
         )
     
     cursor = g.db.cursor(cursor_factory=psycopg2.extras.RealDictCursor) if use_dict else g.db.cursor()

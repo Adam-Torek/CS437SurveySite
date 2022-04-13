@@ -12,8 +12,11 @@
     <h3>Your results:</h3>
     {% for result in results %}
         <div class="result">
-            <p>Statement: {{ count.value }} of {{results|length}}</p>
-            <p>{{ result['statement'] }}</p>
+            <h4>Statement: {{ count.value }} of {{results|length}}</h4>
+            <p>Statement: {{ result['statement'] }}</p>
+            <p>Subject(s): {{ result['subject'] }}</p>
+            <p>Speaker: {{ result['speaker'] }}</p>
+            <p>Context: {{ result['context'] }}</p>
             <p>Your Opinion: {{ result['vote'] }}</p>
             <p>Politifact's Opinion: {{ result['label'] }}</p>
         </div>

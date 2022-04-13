@@ -98,7 +98,8 @@ def create_app(test_config=None):
         shown = session['shown']
         lowest = min(shown)
         highest = max(shown)
-        results = get_result("select l.label AS label, l.statement AS statement, r.vote AS vote FROM liar l INNER JOIN responses r \
+        results = get_result("select l.label AS label, l.statement AS statement, l.speaker as speaker, \
+        l.subject AS subject, l.context AS context, r.vote AS vote FROM liar l INNER JOIN responses r \
             ON r.statement_id = l.id \
             WHERE r.responder_id=%s \
             AND r.statement_id BETWEEN %s and %s \

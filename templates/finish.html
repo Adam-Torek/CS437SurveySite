@@ -12,7 +12,7 @@
     <h3>Your results:</h3>
     {% for result in results %}
         <div class="result">
-            <p>Statement: {{ count.value }}</p>
+            <p>Statement: {{ count.value }} of {{results|length}}</p>
             <p>{{ result['statement'] }}</p>
             <p>Your Opinion: {{ result['vote'] }}</p>
             <p>Politifact's Opinion: {{ result['label'] }}</p>

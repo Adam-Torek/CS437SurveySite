@@ -38,8 +38,7 @@ def create_app(test_config=None):
     def start_survey():
         if get_responder_count() >= max_responders:
             return redirect(url_for("closed", max_responders=max_responders))
-        if is_done():
-            return redirect(url_for("finish_survey"))
+        
         elif has_started():
             return redirect(url_for("do_survey"))
 
@@ -52,8 +51,12 @@ def create_app(test_config=None):
             session['responder_id'] = int(get_result("SELECT id FROM responders ORDER BY id DESC LIMIT 1")[0])
             session['max_id'] = int(get_result("SELECT COUNT(*) FROM liar")[0])
             session['statement'] = get_statement()
+            if is_done():
+                return redirect(url_for("finish_survey"))
             return redirect(url_for("do_survey"))
 
+        elif is_done():
+            return redirect(url_for("finish_survey"))    
         else:
             return render_template('start.html', max_responses=max_responses, responder_count=get_responder_count(), max_responders=max_responders)
 
@@ -61,24 +64,31 @@ def create_app(test_config=None):
     def do_survey():
         if get_responder_count() >= max_responders:
             return redirect(url_for("closed", max_responders=max_responders))
+        if is_done():
+           
+
+            return redirect(url_for("finish_survey"))
         statement = ''
         if not has_started():
             return redirect(url_for("start_survey"))
         
-        elif not is_done():
-            statement = session['statement']
-            if request.method == 'POST':
-                vote = request.form['vote']
-                responder_id = session['responder_id']
-               
-                update_db("INSERT INTO responses (responder_id, statement_id, vote) VALUES (%s,%s,%s)", 
-                (responder_id, statement['id'], vote))
-                statement = get_statement()
-        else:
-            update_db("UPDATE responders SET finished = %s WHERE id = %s", (1, session['responder_id']))   
-            return redirect(url_for('finish_survey'))
+       
+        statement = session['statement']
+        if request.method == 'POST':
+            vote = request.form['vote']
+            responder_id = session['responder_id']
+            session['shown'].append(statement['id'])
+            
+            update_db("INSERT INTO responses (responder_id, statement_id, vote) VALUES (%s,%s,%s)", 
+            (responder_id, statement['id'], vote))
+            statement = get_statement()
+            if is_done():
+                update_db("UPDATE responders SET finished = %s WHERE id = %s", (1, session['responder_id']))
+                return redirect(url_for("finish_survey"))
 
-        return render_template('survey.html', statement=statement, max_responses=max_responses, response_count=len(session['shown']))
+        shown_length = len(session['shown'])+1
+        count = shown_length if shown_length <= max_responses else max_responses
+        return render_template('survey.html', statement=statement, max_responses=max_responses, response_count=count)
 
     @app.route('/finish')
     def finish_survey():
@@ -107,14 +117,12 @@ def create_app(test_config=None):
         return render_template('closed.html', max_responders=max_responders)
 
     def get_statement():
-        shown = session['shown']
         max_id = session['max_id']
         id = random.randint(1, max_id)
+        shown = session['shown']
         while id in shown:
             id = random.randint(1, max_id)
         print(id)
-        shown.append(id)
-        session['shown'] = shown
         row = get_result("SELECT id, statement, subject, speaker, job_title, state_info, party_affiliation, context FROM liar WHERE id = %s", (id,), use_dict=True)
         statement = row
         session['statement'] = statement
@@ -127,7 +135,7 @@ def create_app(test_config=None):
         return session.get('shown') is not None and len(session['shown']) >= max_responses
     
     def has_started():
-        return session.get('shown') is not None and len(session['shown']) > 0
+        return session.get('responder_id') is not None and session['responder_id'] > 0
 
     def convert_to_bool(label):
         return False if label == 1 else True

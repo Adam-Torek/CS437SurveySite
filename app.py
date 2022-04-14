@@ -139,7 +139,7 @@ def create_app(test_config=None):
         return session.get('responder_id') is not None and session['responder_id'] > 0
 
     def convert_to_bool(label):
-        return False if label == 1 else True
+        return True if label == 1 else False
 
     import db
     db.init_app(app)
